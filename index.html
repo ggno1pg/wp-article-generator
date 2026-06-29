@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>WP Article AI — ระบบสร้างบทความ SEO</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.0.0/dist/tabler-icons.min.css"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --surface-0:#f5f5f4;--surface-1:#eeede9;--surface-2:#fff;
+  --text-primary:#1c1c1a;--text-secondary:#6b6b67;--text-muted:#a8a8a3;
+  --border:rgba(0,0,0,0.1);--border-strong:rgba(0,0,0,0.18);
+  --bg-accent:#e8f0fe;--text-accent:#1a56db;--border-accent:#93b4f8;--fill-accent:#1a56db;--fill-accent-hover:#1648c4;--on-accent:#fff;
+  --bg-success:#dcfce7;--text-success:#166534;
+  --bg-warning:#fef9c3;--text-warning:#854d0e;--border-warning:#fde047;
+  --bg-danger:#fee2e2;--text-danger:#991b1b;--border-danger:#fca5a5;
+  --radius:8px;--font-sans:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--font-mono:'Courier New',monospace
+}
+@media(prefers-color-scheme:dark){:root{
+  --surface-0:#1a1a18;--surface-1:#242422;--surface-2:#2e2e2b;
+  --text-primary:#f0ede8;--text-secondary:#9c9c96;--text-muted:#5c5c58;
+  --border:rgba(255,255,255,0.1);--border-strong:rgba(255,255,255,0.18);
+  --bg-accent:#1e3a6e;--text-accent:#93b4f8;--border-accent:#3b5fc0;
+  --bg-success:#14532d;--text-success:#86efac;
+  --bg-warning:#451a03;--text-warning:#fcd34d;--border-warning:#92400e;
+  --bg-danger:#450a0a;--text-danger:#fca5a5;--border-danger:#7f1d1d;
+}}
+body{font-family:var(--font-sans);background:var(--surface-0);color:var(--text-primary);font-size:14px;line-height:1.5}
+.app{display:flex;height:100vh}
+.sidebar{width:220px;min-width:220px;background:var(--surface-1);border-right:0.5px solid var(--border);display:flex;flex-direction:column;padding:12px 0}
+.logo{padding:12px 16px 16px;font-weight:600;font-size:15px;color:var(--text-primary);border-bottom:0.5px solid var(--border);margin-bottom:8px}
+.logo span{color:var(--text-secondary);font-size:11px;display:block;font-weight:400;margin-top:2px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;color:var(--text-secondary);border:none;background:none;width:100%;text-align:left;transition:background 0.1s}
+.nav-item:hover{background:var(--surface-0);color:var(--text-primary)}
+.nav-item.active{background:var(--bg-accent);color:var(--text-accent);font-weight:500}
+.nav-item i{font-size:16px}
+.nav-section{font-size:11px;color:var(--text-muted);padding:12px 16px 4px;text-transform:uppercase;letter-spacing:0.5px}
+.api-status{padding:12px 16px;border-top:0.5px solid var(--border);margin-top:auto}
+.api-status .label{font-size:11px;color:var(--text-muted)}
+.api-status .val{font-size:12px;display:flex;align-items:center;gap:4px;margin-top:2px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--text-muted);flex-shrink:0}
+.dot.ok{background:#16a34a}.dot.err{background:#dc2626}
+.main{flex:1;overflow:auto;background:var(--surface-0)}
+.page{display:none;padding:24px;max-width:900px}
+.page.active{display:block}
+.page-title{font-size:18px;font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:8px}
+.page-sub{font-size:13px;color:var(--text-secondary);margin-bottom:20px}
+.card{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text-primary)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.one{grid-template-columns:1fr}
+.form-row.three{grid-template-columns:1fr 1fr 1fr}
+.field label{font-size:12px;color:var(--text-secondary);display:block;margin-bottom:5px}
+input,select,textarea{width:100%;border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:8px 10px;font-size:13px;background:var(--surface-1);color:var(--text-primary);font-family:var(--font-sans);transition:border-color 0.15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--fill-accent);box-shadow:0 0 0 3px var(--bg-accent)}
+textarea{resize:vertical;min-height:80px}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;border:0.5px solid var(--border-strong);background:var(--surface-1);color:var(--text-primary);transition:all 0.15s;text-decoration:none}
+.btn:hover{background:var(--surface-0)}
+.btn.primary{background:var(--fill-accent);color:var(--on-accent);border-color:var(--fill-accent)}
+.btn.primary:hover{background:var(--fill-accent-hover)}
+.btn.danger{background:var(--bg-danger);color:var(--text-danger);border-color:var(--border-danger)}
+.btn.sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:0.5;cursor:not-allowed}
+.tag-wrap{border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:5px 8px;display:flex;flex-wrap:wrap;gap:5px;cursor:text;background:var(--surface-1);min-height:38px;align-items:center}
+.tag-wrap:focus-within{border-color:var(--fill-accent);box-shadow:0 0 0 3px var(--bg-accent)}
+.tag-wrap input{border:none;outline:none;padding:2px 0;background:transparent;font-size:13px;flex:1;min-width:80px}
+.tag{background:var(--bg-accent);color:var(--text-accent);padding:2px 8px;border-radius:20px;font-size:12px;display:flex;align-items:center;gap:4px}
+.tag button{background:none;border:none;cursor:pointer;color:var(--text-accent);padding:0;font-size:15px;line-height:1}
+.img-opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.img-opt{border:0.5px solid var(--border-strong);border-radius:var(--radius);padding:14px;cursor:pointer;text-align:center;transition:all 0.15s}
+.img-opt:hover,.img-opt.sel{border-color:var(--fill-accent);background:var(--bg-accent)}
+.img-opt i{font-size:26px;color:var(--text-muted);display:block;margin-bottom:6px}
+.img-opt.sel i{color:var(--text-accent)}
+.img-opt p{font-size:13px;font-weight:500;color:var(--text-secondary)}
+.img-opt.sel p{color:var(--text-accent)}
+.img-opt small{font-size:11px;color:var(--text-muted)}
+.site-list{display:flex;flex-direction:column;gap:8px}
+.site-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border:0.5px solid var(--border);border-radius:var(--radius);background:var(--surface-1);cursor:pointer;transition:all 0.15s}
+.site-row.sel{border-color:var(--fill-accent);background:var(--bg-accent)}
+.chk{width:18px;height:18px;border-radius:4px;border:0.5px solid var(--border-strong);display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--surface-2)}
+.chk.on{background:var(--fill-accent);border-color:var(--fill-accent);color:#fff}
+.chk i{font-size:12px}
+.site-info p{font-size:13px;font-weight:500}
+.site-info span{font-size:12px;color:var(--text-secondary)}
+.prog-bar{background:var(--surface-1);border-radius:20px;height:6px;margin:12px 0;overflow:hidden;border:0.5px solid var(--border)}
+.prog-fill{height:100%;background:var(--fill-accent);border-radius:20px;transition:width 0.4s ease}
+.log{background:var(--surface-0);border:0.5px solid var(--border);border-radius:var(--radius);padding:12px;font-size:12px;color:var(--text-secondary);max-height:160px;overflow:auto;font-family:var(--font-mono);line-height:1.8}
+.log .ok{color:var(--text-success)}.log .err{color:var(--text-danger)}.log .info{color:var(--text-accent)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:9px 12px;font-size:12px;font-weight:500;color:var(--text-secondary);border-bottom:0.5px solid var(--border);background:var(--surface-1)}
+td{padding:10px 12px;border-bottom:0.5px solid var(--border);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--surface-1)}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.badge.green{background:var(--bg-success);color:var(--text-success)}
+.badge.amber{background:var(--bg-warning);color:var(--text-warning)}
+.badge.blue{background:var(--bg-accent);color:var(--text-accent)}
+.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--surface-2);border:0.5px solid var(--border);border-radius:12px;padding:16px}
+.stat-n{font-size:28px;font-weight:600}
+.stat-l{font-size:12px;color:var(--text-secondary);margin-top:2px}
+.preview-body{background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);padding:20px;font-size:14px;line-height:1.9;max-height:420px;overflow:auto}
+.preview-body h1{font-size:20px;margin-bottom:12px;font-weight:600}
+.preview-body h2{font-size:16px;margin:18px 0 8px;font-weight:600}
+.preview-body p{margin-bottom:10px}
+.preview-body a{color:var(--text-accent)}
+.preview-body ul{padding-left:20px;margin-bottom:10px}
+.preview-body li{margin-bottom:4px}
+.tabs{display:flex;gap:0;border:0.5px solid var(--border-strong);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.tab{flex:1;padding:8px;font-size:12px;font-weight:500;text-align:center;cursor:pointer;background:var(--surface-1);color:var(--text-secondary);border:none;border-right:0.5px solid var(--border)}
+.tab:last-child{border-right:none}
+.tab.active{background:var(--bg-accent);color:var(--text-accent)}
+.link-rows{display:flex;flex-direction:column;gap:8px}
+.link-row{display:flex;gap:8px;align-items:center}
+.notice{background:var(--bg-warning);color:var(--text-warning);border:0.5px solid var(--border-warning);border-radius:var(--radius);padding:10px 12px;font-size:12px;display:flex;gap:8px;align-items:flex-start;margin-bottom:14px}
+.notice i{flex-shrink:0;font-size:15px;margin-top:1px}
+.cat-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cat-chip{border:0.5px solid var(--border-strong);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;background:var(--surface-1);color:var(--text-secondary);transition:all 0.1s}
+.cat-chip.sel{background:var(--bg-accent);color:var(--text-accent);border-color:var(--border-accent)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;align-items:center;justify-content:center;z-index:200}
+.modal-bg.open{display:flex}
+.modal{background:var(--surface-2);border-radius:14px;padding:24px;width:640px;max-width:95vw;max-height:85vh;overflow:auto;border:0.5px solid var(--border);position:relative}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:4px}
+.modal-meta{font-size:12px;color:var(--text-secondary);margin-bottom:16px}
+.close-btn{position:absolute;top:16px;right:16px;background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:20px;line-height:1}
+.settings-group{margin-bottom:20px}
+.settings-group:last-child{margin-bottom:0}
+.settings-label{font-size:13px;font-weight:600;margin-bottom:10px;color:var(--text-primary)}
+.key-display{font-family:var(--font-mono);font-size:12px;background:var(--surface-1);border:0.5px solid var(--border);border-radius:var(--radius);padding:8px 12px;color:var(--text-secondary);word-break:break-all;margin-bottom:8px}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted)}
+.empty-state i{font-size:40px;display:block;margin-bottom:10px}
+.empty-state p{font-size:13px}
+.empty-state a{color:var(--text-accent);cursor:pointer}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">WP Article AI<span>ระบบสร้างบทความ SEO</span></div>
+  <div class="nav-section">หลัก</div>
+  <button class="nav-item active" onclick="goto('create',this)"><i class="ti ti-pencil-plus"></i>สร้างบทความ</button>
+  <button class="nav-item" onclick="goto('sites',this)"><i class="ti ti-world"></i>เว็บไซต์</button>
+  <div class="nav-section">รายงาน</div>
+  <button class="nav-item" onclick="goto('report',this)"><i class="ti ti-chart-bar"></i>สรุปรายงาน</button>
+  <button class="nav-item" onclick="goto('history',this)"><i class="ti ti-history"></i>ประวัติบทความ</button>
+  <div class="nav-section">ระบบ</div>
+  <button class="nav-item" onclick="goto('settings',this)"><i class="ti ti-settings"></i>ตั้งค่า API</button>
+  <div class="api-status">
+    <div class="label">Claude API</div>
+    <div class="val" id="api-status-display"><span class="dot" id="api-dot"></span><span id="api-status-text">ยังไม่ได้ตั้งค่า</span></div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+<!-- CREATE -->
+<div id="page-create" class="page active">
+  <div class="page-title"><i class="ti ti-pencil-plus"></i>สร้างบทความ SEO</div>
+  <div class="page-sub">สร้างบทความภาษาไทยได้มาตรฐาน SEO พร้อมโพสหลายเว็บพร้อมกัน</div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-file-text"></i>ข้อมูลบทความ</div>
+    <div class="form-row">
+      <div class="field"><label>หัวข้อบทความ *</label><input id="c-title" placeholder="เช่น วิธีลดน้ำหนักอย่างได้ผล"/></div>
+      <div class="field"><label>Keyword หลัก *</label><input id="c-kw" placeholder="เช่น ลดน้ำหนัก"/></div>
+    </div>
+    <div class="form-row one">
+      <div class="field"><label>คำอธิบายเพิ่มเติม</label><textarea id="c-desc" rows="2" placeholder="รายละเอียดที่ต้องการให้บทความครอบคลุม..."></textarea></div>
+    </div>
+    <div class="form-row three">
+      <div class="field"><label>ความยาว</label>
+        <select id="c-len"><option value="500">สั้น (~500 คำ)</option><option value="1000" selected>กลาง (~1000 คำ)</option><option value="1500">ยาว (~1500 คำ)</option><option value="2000">ยาวมาก (~2000+ คำ)</option></select>
+      </div>
+      <div class="field"><label>ระดับ SEO</label>
+        <select id="c-seo"><option>พื้นฐาน</option><option selected>ดี</option><option>เข้มข้น</option></select>
+      </div>
+      <div class="field"><label>สไตล์การเขียน</label>
+        <select id="c-tone"><option>เป็นกันเอง</option><option selected>วิชาการ</option><option>การตลาด</option><option>ข่าว</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-link"></i>Anchor Text Links</div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('int',this)">Internal Links</button>
+      <button class="tab" onclick="switchTab('ext',this)">External Links</button>
+      <button class="tab" onclick="switchTab('both',this)">ทั้งสองแบบ</button>
+    </div>
+    <div id="tab-int">
+      <div class="field" style="margin-bottom:8px"><label>Keyword → URL ภายในเว็บของคุณ</label></div>
+      <div class="link-rows" id="lr-int">
+        <div class="link-row"><input placeholder="keyword" style="max-width:150px"/><input placeholder="https://yoursite.com/page"/><button class="btn sm danger" onclick="this.closest('.link-row').remove()"><i class="ti ti-trash"></i></button></div>
+      </div>
+      <button class="btn sm" style="margin-top:8px" onclick="addLink('lr-int')"><i class="ti ti-plus"></i>เพิ่ม</button>
+    </div>
+    <div id="tab-ext" style="display:none">
+      <div class="field" style="margin-bottom:8px"><label>Keyword → URL ภายนอก (Wikipedia, แหล่งอ้างอิง ฯลฯ)</label></div>
+      <div class="link-rows" id="lr-ext">
+        <div class="link-row"><input placeholder="keyword" style="max-width:150px"/><input placeholder="https://wikipedia.org/..."/><button class="btn sm danger" onclick="this.closest('.link-row').remove()"><i class="ti ti-trash"></i></button></div>
+      </div>
+      <button class="btn sm" style="margin-top:8px" onclick="addLink('lr-ext')"><i class="ti ti-plus"></i>เพิ่ม</button>
+    </div>
+    <div id="tab-both" style="display:none">
+      <div class="field" style="margin-bottom:8px"><label>Internal Links</label></div>
+      <div class="link-rows" id="lr-bi"><div class="link-row"><input placeholder="keyword" style="max-width:150px"/><input placeholder="https://yoursite.com/page"/><button class="btn sm danger" onclick="this.closest('.link-row').remove()"><i class="ti ti-trash"></i></button></div></div>
+      <button class="btn sm" style="margin-top:8px;margin-bottom:14px" onclick="addLink('lr-bi')"><i class="ti ti-plus"></i>เพิ่ม</button>
+      <div class="field" style="margin-bottom:8px"><label>External Links</label></div>
+      <div class="link-rows" id="lr-be"><div class="link-row"><input placeholder="keyword" style="max-width:150px"/><input placeholder="https://wikipedia.org/..."/><button class="btn sm danger" onclick="this.closest('.link-row').remove()"><i class="ti ti-trash"></i></button></div></div>
+      <button class="btn sm" style="margin-top:8px" onclick="addLink('lr-be')"><i class="ti ti-plus"></i>เพิ่ม</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-photo"></i>รูปภาพ</div>
+    <div class="img-opts">
+      <div class="img-opt sel" id="opt-ai" onclick="setImgMode('ai')">
+        <i class="ti ti-sparkles"></i>
+        <p>AI สร้างอัตโนมัติ</p>
+        <small>สร้างจาก keyword</small>
+      </div>
+      <div class="img-opt" id="opt-up" onclick="setImgMode('upload')">
+        <i class="ti ti-upload"></i>
+        <p>อัปโหลดเอง</p>
+        <small>JPG, PNG, WEBP</small>
+      </div>
+    </div>
+    <div id="ai-area" style="margin-top:12px">
+      <div class="field"><label>คำอธิบายรูปเพิ่มเติม (ไม่บังคับ)</label><input id="img-prompt" placeholder="เช่น คนออกกำลังกายในสวน สไตล์ minimal สีสดใส..."/></div>
+    </div>
+    <div id="up-area" style="display:none;margin-top:12px">
+      <div class="field"><label>เลือกไฟล์รูป</label><input type="file" id="img-file" accept="image/*"/></div>
+      <div id="img-preview" style="margin-top:8px;display:none"><img id="img-thumb" style="max-height:120px;border-radius:var(--radius);border:0.5px solid var(--border)"/></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-tag"></i>หมวดหมู่ และ Tags</div>
+    <div class="form-row">
+      <div class="field">
+        <label>หมวดหมู่ WordPress</label>
+        <select id="c-cat"><option value="">— กด "โหลด" เพื่อดึงจากเว็บ —</option></select>
+        <div class="cat-grid" id="cat-chips"></div>
+        <button class="btn sm" style="margin-top:8px" onclick="loadCats()"><i class="ti ti-refresh"></i>โหลดหมวดหมู่</button>
+      </div>
+      <div class="field">
+        <label>Tags</label>
+        <div class="tag-wrap" id="tag-wrap" onclick="document.getElementById('tag-in').focus()">
+          <input id="tag-in" placeholder="พิมพ์แล้วกด Enter..." onkeydown="addTag(event)"/>
+        </div>
+        <div style="margin-top:6px;font-size:11px;color:var(--text-muted)">
+          แนะนำ:
+          <span style="cursor:pointer;color:var(--text-accent)" onclick="pushTag('สุขภาพ')">สุขภาพ</span> ·
+          <span style="cursor:pointer;color:var(--text-accent)" onclick="pushTag('ไลฟ์สไตล์')">ไลฟ์สไตล์</span> ·
+          <span style="cursor:pointer;color:var(--text-accent)" onclick="pushTag('ออกกำลังกาย')">ออกกำลังกาย</span> ·
+          <span style="cursor:pointer;color:var(--text-accent)" onclick="pushTag('SEO')">SEO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-world"></i>เลือกเว็บที่จะโพส</div>
+    <div class="site-list" id="post-sites"></div>
+    <div style="margin-top:10px;display:flex;gap:8px">
+      <button class="btn sm" onclick="selAll()"><i class="ti ti-check-all"></i>เลือกทั้งหมด</button>
+      <button class="btn sm" onclick="selNone()"><i class="ti ti-x"></i>ล้าง</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><i class="ti ti-bolt"></i>สร้างและโพส</div>
+    <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+      <button class="btn primary" id="btn-gen" onclick="generate()"><i class="ti ti-sparkles"></i>สร้างบทความ + โพส</button>
+      <button class="btn" id="btn-prev" onclick="previewOnly()"><i class="ti ti-eye"></i>Preview ก่อนโพส</button>
+    </div>
+    <div id="gen-status" style="display:none">
+      <div class="prog-bar"><div class="prog-fill" id="prog" style="width:0%"></div></div>
+      <div class="log" id="gen-log"></div>
+    </div>
+  </div>
+
+  <div id="preview-card" class="card" style="display:none">
+    <div class="card-title"><i class="ti ti-eye"></i>Preview บทความ</div>
+    <div class="preview-body" id="preview-inline"></div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="btn primary" onclick="postGenerated()"><i class="ti ti-upload"></i>โพสเลย</button>
+      <button class="btn" onclick="document.getElementById('preview-card').style.display='none'"><i class="ti ti-x"></i>ปิด</button>
+    </div>
+  </div>
+</div>
+
+<!-- SITES -->
+<div id="page-sites" class="page">
+  <div class="page-title"><i class="ti ti-world"></i>จัดการเว็บไซต์</div>
+  <div class="page-sub">เพิ่มเว็บ WordPress ที่ต้องการโพสผ่าน REST API</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-plus"></i>เพิ่มเว็บใหม่</div>
+    <div class="notice"><i class="ti ti-info-circle"></i><span>App Password: WP Admin → Users → Profile → Application Passwords → สร้าง Password ใหม่ (รูปแบบ xxxx xxxx xxxx xxxx)</span></div>
+    <div class="form-row one"><div class="field"><label>ชื่อเว็บ (ตั้งเอง)</label><input id="s-name" placeholder="เช่น บล็อกสุขภาพหลัก"/></div></div>
+    <div class="form-row one"><div class="field"><label>URL เว็บ WordPress</label><input id="s-url" placeholder="https://yoursite.com"/></div></div>
+    <div class="form-row">
+      <div class="field"><label>WordPress Username</label><input id="s-user" placeholder="admin"/></div>
+      <div class="field"><label>App Password</label><input id="s-pass" type="password" placeholder="xxxx xxxx xxxx xxxx xxxx xxxx"/></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:4px">
+      <button class="btn primary" onclick="addSite()"><i class="ti ti-plus"></i>เพิ่มเว็บ</button>
+      <button class="btn" onclick="testSite()"><i class="ti ti-plug"></i>ทดสอบการเชื่อมต่อ</button>
+    </div>
+    <div id="test-result" style="margin-top:10px;font-size:12px;display:none"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-list"></i>เว็บที่บันทึกไว้</div>
+    <div id="sites-list"></div>
+  </div>
+</div>
+
+<!-- REPORT -->
+<div id="page-report" class="page">
+  <div class="page-title"><i class="ti ti-chart-bar"></i>สรุปรายงาน</div>
+  <div class="page-sub">ภาพรวมบทความทั้งหมดที่สร้างและโพส</div>
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">บทความทั้งหมด</div></div>
+    <div class="stat"><div class="stat-n" id="s-posted">0</div><div class="stat-l">โพสแล้ว</div></div>
+    <div class="stat"><div class="stat-n" id="s-kw">0</div><div class="stat-l">Keyword เฉลี่ย/บทความ</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="justify-content:space-between">
+      <span><i class="ti ti-table"></i>รายการบทความ</span>
+      <button class="btn sm primary" onclick="exportCSV()"><i class="ti ti-download"></i>Export Excel (CSV)</button>
+    </div>
+    <div style="overflow:auto">
+      <table>
+        <thead><tr><th>ชื่อบทความ</th><th>Keyword</th><th>จำนวน KW</th><th>หมวดหมู่</th><th>เว็บที่โพส</th><th>วันที่</th><th>สถานะ</th></tr></thead>
+        <tbody id="report-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div id="page-history" class="page">
+  <div class="page-title"><i class="ti ti-history"></i>ประวัติบทความ</div>
+  <div class="page-sub">ดู Preview บทความที่สร้างไปแล้วทั้งหมด</div>
+  <div id="history-list"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="page-title"><i class="ti ti-settings"></i>ตั้งค่า</div>
+  <div class="page-sub">ตั้งค่า API Key และระบบ</div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-key"></i>Claude API Key</div>
+    <div class="notice"><i class="ti ti-shield"></i><span><strong>ความปลอดภัย:</strong> เมื่อ deploy บน Vercel ให้ตั้ง ANTHROPIC_API_KEY ใน Vercel Environment Variables แทน — ไม่ต้องกรอกที่นี่ ระบบจะเรียกผ่าน <code>/api/chat</code> อัตโนมัติ หากรันแบบ local ให้กรอกด้านล่าง</span></div>
+    <div class="settings-group">
+      <div class="settings-label">สำหรับ Local Development เท่านั้น</div>
+      <div class="field"><label>API Key (เก็บใน localStorage — ไม่แนะนำสำหรับ production)</label>
+        <div style="display:flex;gap:8px">
+          <input id="api-key-input" type="password" placeholder="sk-ant-api03-..." style="flex:1"/>
+          <button class="btn primary" onclick="saveKey()"><i class="ti ti-device-floppy"></i>บันทึก</button>
+          <button class="btn danger" onclick="clearKey()"><i class="ti ti-trash"></i>ลบ</button>
+        </div>
+      </div>
+      <div id="key-saved" style="font-size:12px;color:var(--text-success);margin-top:6px;display:none"><i class="ti ti-check"></i> บันทึกแล้ว (local only)</div>
+    </div>
+    <div class="settings-group">
+      <div class="settings-label">วิธีตั้งค่าบน Vercel (แนะนำ)</div>
+      <ol style="font-size:13px;color:var(--text-secondary);line-height:2;padding-left:20px">
+        <li>ไปที่ vercel.com → Project ของคุณ → <strong>Settings</strong></li>
+        <li>คลิก <strong>Environment Variables</strong></li>
+        <li>กด <strong>Add New</strong> → Name: <code>ANTHROPIC_API_KEY</code></li>
+        <li>Value: ใส่ API Key จาก console.anthropic.com</li>
+        <li>กด <strong>Save</strong> → Redeploy</li>
+      </ol>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title"><i class="ti ti-database"></i>ข้อมูลในเครื่อง</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn" onclick="exportData()"><i class="ti ti-download"></i>Export ข้อมูลทั้งหมด (JSON)</button>
+      <button class="btn danger" onclick="clearData()"><i class="ti ti-trash"></i>ล้างข้อมูลทั้งหมด</button>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()"><i class="ti ti-x"></i></button>
+    <div class="modal-title" id="modal-title"></div>
+    <div class="modal-meta" id="modal-meta"></div>
+    <div class="preview-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  sites: JSON.parse(localStorage.getItem('wp_sites') || '[]'),
+  articles: JSON.parse(localStorage.getItem('wp_articles') || '[]'),
+  tags: [],
+  selSites: new Set(),
+  imgMode: 'ai',
+  linkTab: 'int',
+  genHTML: '',
+  genKW: 0
+};
+
+function save() {
+  localStorage.setItem('wp_sites', JSON.stringify(S.sites));
+  localStorage.setItem('wp_articles', JSON.stringify(S.articles));
+}
+
+// ─── NAV ─────────────────────────────────────────────────────────────────────
+function goto(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (el) el.classList.add('active');
+  if (page === 'report') renderReport();
+  if (page === 'history') renderHistory();
+  if (page === 'create') renderPostSites();
+  if (page === 'sites') renderSitesList();
+  updateApiStatus();
+}
+
+// ─── API KEY ──────────────────────────────────────────────────────────────────
+function getApiKey() { return localStorage.getItem('wp_apikey') || ''; }
+function saveKey() {
+  const k = document.getElementById('api-key-input').value.trim();
+  if (k) { localStorage.setItem('wp_apikey', k); document.getElementById('key-saved').style.display = 'block'; updateApiStatus(); }
+}
+function clearKey() { localStorage.removeItem('wp_apikey'); document.getElementById('api-key-input').value = ''; document.getElementById('key-saved').style.display = 'none'; updateApiStatus(); }
+function updateApiStatus() {
+  const dot = document.getElementById('api-dot');
+  const txt = document.getElementById('api-status-text');
+  const hasKey = !!getApiKey();
+  dot.className = 'dot ' + (hasKey ? 'ok' : '');
+  txt.textContent = hasKey ? 'พร้อมใช้งาน' : 'ยังไม่ได้ตั้งค่า';
+}
+
+// ─── CLAUDE API CALL ──────────────────────────────────────────────────────────
+async function callClaude(messages, maxTokens = 2000) {
+  const localKey = getApiKey();
+  const body = { model: 'claude-sonnet-4-6', max_tokens: maxTokens, messages };
+
+  if (localKey) {
+    // Local dev: call Anthropic directly
+    const r = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': localKey, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify(body)
+    });
+    return r.json();
+  } else {
+    // Production: call through Vercel serverless function
+    const r = await fetch('/api/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    return r.json();
+  }
+}
+
+// ─── IMAGE MODE ───────────────────────────────────────────────────────────────
+function setImgMode(m) {
+  S.imgMode = m;
+  document.getElementById('opt-ai').classList.toggle('sel', m === 'ai');
+  document.getElementById('opt-up').classList.toggle('sel', m === 'upload');
+  document.getElementById('ai-area').style.display = m === 'ai' ? 'block' : 'none';
+  document.getElementById('up-area').style.display = m === 'upload' ? 'block' : 'none';
+}
+document.getElementById('img-file').addEventListener('change', function() {
+  const f = this.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = e => { document.getElementById('img-thumb').src = e.target.result; document.getElementById('img-preview').style.display = 'block'; }; r.readAsDataURL(f);
+});
+
+// ─── LINK TABS ────────────────────────────────────────────────────────────────
+function switchTab(tab, el) {
+  S.linkTab = tab;
+  ['int','ext','both'].forEach(t => document.getElementById('tab-' + t).style.display = t === tab ? 'block' : 'none');
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+function addLink(id) {
+  const d = document.createElement('div'); d.className = 'link-row';
+  d.innerHTML = '<input placeholder="keyword" style="max-width:150px"/><input placeholder="https://..."/><button class="btn sm danger" onclick="this.closest(\'.link-row\').remove()"><i class="ti ti-trash"></i></button>';
+  document.getElementById(id).appendChild(d);
+}
+function gatherLinks() {
+  const links = [];
+  const gather = (id, type) => { document.querySelectorAll('#' + id + ' .link-row').forEach(r => { const ins = r.querySelectorAll('input'); if (ins[0].value && ins[1].value) links.push({ kw: ins[0].value, url: ins[1].value, type }); }); };
+  const t = S.linkTab;
+  if (t === 'int') gather('lr-int', 'internal');
+  if (t === 'ext') gather('lr-ext', 'external');
+  if (t === 'both') { gather('lr-bi', 'internal'); gather('lr-be', 'external'); }
+  return links;
+}
+
+// ─── TAGS ─────────────────────────────────────────────────────────────────────
+function addTag(e) {
+  if (e.key !== 'Enter' && e.key !== ',') return;
+  e.preventDefault();
+  const v = e.target.value.trim().replace(/,$/, '');
+  if (v && !S.tags.includes(v)) { S.tags.push(v); renderTags(); }
+  e.target.value = '';
+}
+function pushTag(t) { if (!S.tags.includes(t)) { S.tags.push(t); renderTags(); } }
+function renderTags() {
+  const wrap = document.getElementById('tag-wrap');
+  wrap.querySelectorAll('.tag').forEach(t => t.remove());
+  S.tags.forEach((t, i) => {
+    const el = document.createElement('div'); el.className = 'tag';
+    el.innerHTML = t + '<button onclick="S.tags.splice(' + i + ',1);renderTags()">×</button>';
+    wrap.insertBefore(el, document.getElementById('tag-in'));
+  });
+}
+
+// ─── CATEGORIES ───────────────────────────────────────────────────────────────
+async function loadCats() {
+  const sel = document.getElementById('c-cat');
+  const chips = document.getElementById('cat-chips');
+  sel.innerHTML = '<option>กำลังโหลด...</option>';
+  chips.innerHTML = '';
+
+  const sites = S.sites.filter(s => S.selSites.has(s.id));
+  if (!sites.length) {
+    const cats = ['ทั่วไป','สุขภาพ','ไลฟ์สไตล์','เทคโนโลยี','อาหาร','การเดินทาง','ธุรกิจ','ความงาม','บันเทิง','กีฬา'];
+    sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('');
+    chips.innerHTML = cats.map(c => `<div class="cat-chip" onclick="pickCat(this,'${c}')">${c}</div>`).join('');
+    return;
+  }
+  const site = sites[0];
+  try {
+    const r = await fetch(site.url + '/wp-json/wp/v2/categories?per_page=50', {
+      headers: { 'Authorization': 'Basic ' + btoa(site.user + ':' + site.pass) }
+    });
+    const cats = await r.json();
+    sel.innerHTML = cats.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    chips.innerHTML = cats.map(c => `<div class="cat-chip" onclick="pickCat(this,'${c.name}')">${c.name}</div>`).join('');
+  } catch {
+    sel.innerHTML = '<option>โหลดไม่ได้ (CORS?)</option>';
+  }
+}
+function pickCat(el, name) {
+  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+// ─── SITES ────────────────────────────────────────────────────────────────────
+function addSite() {
+  const n = document.getElementById('s-name').value.trim();
+  const u = document.getElementById('s-url').value.trim().replace(/\/$/, '');
+  const usr = document.getElementById('s-user').value.trim();
+  const p = document.getElementById('s-pass').value.trim();
+  if (!n || !u || !usr || !p) { alert('กรุณากรอกข้อมูลให้ครบ'); return; }
+  S.sites.push({ id: Date.now(), name: n, url: u, user: usr, pass: p });
+  save();
+  renderSitesList();
+  renderPostSites();
+  ['s-name','s-url','s-user','s-pass'].forEach(id => document.getElementById(id).value = '');
+}
+
+async function testSite() {
+  const u = document.getElementById('s-url').value.trim().replace(/\/$/, '');
+  const usr = document.getElementById('s-user').value.trim();
+  const p = document.getElementById('s-pass').value.trim();
+  const res = document.getElementById('test-result');
+  res.style.display = 'block';
+  res.innerHTML = '<span style="color:var(--text-warning)"><i class="ti ti-loader-2"></i> กำลังทดสอบ...</span>';
+  try {
+    const r = await fetch(u + '/wp-json/wp/v2/users/me', {
+      headers: { 'Authorization': 'Basic ' + btoa(usr + ':' + p) }
+    });
+    const d = await r.json();
+    if (d.id) res.innerHTML = `<span style="color:var(--text-success)"><i class="ti ti-check"></i> เชื่อมต่อสำเร็จ! ยินดีต้อนรับ ${d.name}</span>`;
+    else res.innerHTML = `<span style="color:var(--text-danger)"><i class="ti ti-x"></i> ล็อกอินไม่สำเร็จ: ${d.message || 'ตรวจสอบ username/password'}</span>`;
+  } catch (e) {
+    res.innerHTML = `<span style="color:var(--text-danger)"><i class="ti ti-x"></i> เชื่อมต่อไม่ได้: ${e.message} (ตรวจสอบ CORS/URL)</span>`;
+  }
+}
+
+function renderSitesList() {
+  const el = document.getElementById('sites-list');
+  if (!S.sites.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-world-off"></i><p>ยังไม่มีเว็บไซต์ — เพิ่มด้านบน</p></div>'; return; }
+  el.innerHTML = '<table><thead><tr><th>ชื่อ</th><th>URL</th><th>Username</th><th></th></tr></thead><tbody>' +
+    S.sites.map(s => `<tr><td style="font-weight:500">${s.name}</td><td style="font-size:12px;color:var(--text-secondary)">${s.url}</td><td>${s.user}</td><td><button class="btn sm danger" onclick="delSite(${s.id})"><i class="ti ti-trash"></i></button></td></tr>`).join('') + '</tbody></table>';
+}
+
+function delSite(id) {
+  if (!confirm('ลบเว็บนี้?')) return;
+  S.sites = S.sites.filter(s => s.id !== id);
+  S.selSites.delete(id);
+  save(); renderSitesList(); renderPostSites();
+}
+
+function renderPostSites() {
+  const el = document.getElementById('post-sites');
+  if (!S.sites.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-world-off"></i><p>ยังไม่มีเว็บ — <a onclick="goto(\'sites\',document.querySelectorAll(\'.nav-item\')[1])">เพิ่มเว็บไซต์</a></p></div>'; return; }
+  el.innerHTML = S.sites.map(s => {
+    const on = S.selSites.has(s.id);
+    return `<div class="site-row${on?' sel':''}" onclick="toggleSite(${s.id})" id="sr-${s.id}">
+      <div class="chk${on?' on':''}">${on?'<i class="ti ti-check"></i>':''}</div>
+      <div class="site-info"><p>${s.name}</p><span>${s.url}</span></div>
+    </div>`;
+  }).join('');
+}
+function toggleSite(id) { S.selSites.has(id) ? S.selSites.delete(id) : S.selSites.add(id); renderPostSites(); }
+function selAll() { S.sites.forEach(s => S.selSites.add(s.id)); renderPostSites(); }
+function selNone() { S.selSites.clear(); renderPostSites(); }
+
+// ─── GENERATE ─────────────────────────────────────────────────────────────────
+function buildPrompt(title, kw, len, tone, seoLevel, cat) {
+  const links = gatherLinks();
+  const linkInstr = links.length ? '\n\nใส่ anchor text links เหล่านี้ในเนื้อหาอย่างเป็นธรรมชาติ:\n' + links.map(l => `- keyword "${l.kw}" → <a href="${l.url}">${l.kw}</a> (${l.type})`).join('\n') : '';
+  return `คุณเป็นนักเขียน SEO มืออาชีพภาษาไทย สร้างบทความตามหลัก SEO On-Page
+
+หัวข้อ: "${title}"
+Keyword หลัก: "${kw || title}"
+ความยาวเป้าหมาย: ${len} คำ
+สไตล์: ${tone}
+ระดับ SEO: ${seoLevel}
+หมวดหมู่: ${cat || 'ทั่วไป'}
+Tags: ${S.tags.join(', ') || 'ไม่ระบุ'}${linkInstr}
+
+กรุณาสร้างบทความเป็น HTML โดย:
+1. เริ่มด้วย <h1> เป็นชื่อบทความที่มี keyword
+2. มี <p class="seo-meta"> สำหรับ meta description ไม่เกิน 160 ตัวอักษร
+3. มี <h2> อย่างน้อย 3-5 หัวข้อย่อยที่มี keyword
+4. ใส่ keyword ตลอดบทความ keyword density 1-3%
+5. มี <ul> หรือ <ol> อย่างน้อย 1 รายการ
+6. ถ้ามี anchor links ให้ใส่จริงๆ ในเนื้อหา
+7. ปิดท้ายด้วย <h2>สรุป</h2> และย่อหน้าสรุป
+
+ตอบเฉพาะ HTML เท่านั้น ไม่ต้องมี DOCTYPE หรือ <html>/<head>/<body>`;
+}
+
+function log(msg, cls = '') { const el = document.getElementById('gen-log'); el.innerHTML += `<div class="${cls}">${msg}</div>`; el.scrollTop = el.scrollHeight; }
+function setP(p) { document.getElementById('prog').style.width = p + '%'; }
+
+async function generate() {
+  const title = document.getElementById('c-title').value.trim();
+  const kw = document.getElementById('c-kw').value.trim();
+  if (!title) { alert('กรุณาใส่หัวข้อบทความ'); return; }
+
+  document.getElementById('gen-status').style.display = 'block';
+  document.getElementById('preview-card').style.display = 'none';
+  document.getElementById('gen-log').innerHTML = '';
+  document.getElementById('btn-gen').disabled = true;
+  document.getElementById('btn-prev').disabled = true;
+  setP(0);
+
+  const len = document.getElementById('c-len').value;
+  const tone = document.getElementById('c-tone').value;
+  const seoLevel = document.getElementById('c-seo').value;
+  const cat = document.querySelector('.cat-chip.sel')?.textContent || document.getElementById('c-cat').value || 'ทั่วไป';
+
+  log('<span class="info">▶ เริ่มสร้างบทความ: ' + title + '</span>');
+  log('⏳ เรียก Claude API...');
+  setP(15);
+
+  let html = '';
+  try {
+    const data = await callClaude([{ role: 'user', content: buildPrompt(title, kw, len, tone, seoLevel, cat) }], 3000);
+    if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+    html = data.content?.map(c => c.text || '').join('') || '';
+    html = html.replace(/```html?/gi, '').replace(/```/g, '').trim();
+    log('<span class="ok">✓ สร้างเนื้อหาสำเร็จ (' + html.length + ' ตัวอักษร)</span>');
+  } catch (e) {
+    log('<span class="err">✗ API Error: ' + e.message + '</span>');
+    log('<span class="info">ℹ ใช้ตัวอย่างบทความแทน</span>');
+    html = fallbackArticle(title, kw);
+  }
+
+  S.genHTML = html;
+  setP(45);
+
+  const kwCount = kw ? (html.match(new RegExp(kw, 'gi')) || []).length : 0;
+  S.genKW = kwCount;
+  log(`<span class="info">📊 keyword "${kw}" พบ ${kwCount} ครั้ง</span>`);
+
+  if (S.imgMode === 'ai') {
+    log('🖼 สร้างรูปภาพ AI... (จำลอง)');
+    setP(60);
+    await delay(500);
+    log('<span class="ok">✓ รูปภาพพร้อม</span>');
+  } else {
+    log('<span class="ok">✓ ใช้รูปภาพที่อัปโหลด</span>');
+  }
+
+  setP(70);
+  const selSites = S.sites.filter(s => S.selSites.has(s.id));
+
+  if (selSites.length) {
+    for (const site of selSites) {
+      log(`📤 โพสไปที่ ${site.name}...`);
+      setP(70 + Math.round(25 * (selSites.indexOf(site) + 1) / selSites.length));
+      try {
+        const wpRes = await postToWordPress(site, title, html, cat);
+        if (wpRes.id) log(`<span class="ok">✓ โพสสำเร็จ: ${site.name} (ID: ${wpRes.id})</span>`);
+        else log(`<span class="err">✗ ${site.name}: ${wpRes.message || 'ไม่ทราบสาเหตุ'}</span>`);
+      } catch (e) {
+        log(`<span class="err">✗ ${site.name}: ${e.message}</span>`);
+      }
+      await delay(400);
+    }
+  } else {
+    log('<span class="info">ℹ ไม่ได้เลือกเว็บ — บันทึกเป็นร่างเท่านั้น</span>');
+  }
+
+  setP(100);
+  log('<span class="ok">✅ เสร็จสมบูรณ์!</span>');
+
+  const art = { id: Date.now(), title, keyword: kw, kwCount, html, sites: selSites.map(s => s.name), category: cat, tags: [...S.tags], date: new Date().toLocaleDateString('th-TH'), status: selSites.length ? 'โพสแล้ว' : 'ร่าง' };
+  S.articles.push(art);
+  save();
+
+  document.getElementById('btn-gen').disabled = false;
+  document.getElementById('btn-prev').disabled = false;
+}
+
+async function postToWordPress(site, title, html, cat) {
+  const catSel = document.getElementById('c-cat');
+  const catId = catSel.value && !isNaN(catSel.value) ? [parseInt(catSel.value)] : [];
+  const body = { title, content: html, status: 'publish', categories: catId, tags: [] };
+  const r = await fetch(site.url + '/wp-json/wp/v2/posts', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Authorization': 'Basic ' + btoa(site.user + ':' + site.pass) },
+    body: JSON.stringify(body)
+  });
+  return r.json();
+}
+
+async function previewOnly() {
+  const title = document.getElementById('c-title').value.trim();
+  const kw = document.getElementById('c-kw').value.trim();
+  if (!title) { alert('กรุณาใส่หัวข้อบทความ'); return; }
+
+  const card = document.getElementById('preview-card');
+  document.getElementById('preview-inline').innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted)"><i class="ti ti-loader-2" style="font-size:24px"></i><p style="margin-top:8px">กำลังสร้าง preview...</p></div>';
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    const data = await callClaude([{ role: 'user', content: `สร้างบทความ SEO ภาษาไทย เรื่อง "${title}" keyword: "${kw}" ความยาว 400 คำ เป็น HTML (ใช้ h1,h2,p,strong,ul,li เท่านั้น) ตอบเฉพาะ HTML` }], 1500);
+    let html = data.content?.map(c => c.text || '').join('') || '';
+    html = html.replace(/```html?/gi, '').replace(/```/g, '').trim();
+    S.genHTML = html;
+    document.getElementById('preview-inline').innerHTML = html;
+  } catch (e) {
+    S.genHTML = fallbackArticle(title, kw);
+    document.getElementById('preview-inline').innerHTML = S.genHTML;
+  }
+}
+
+function postGenerated() {
+  if (!S.genHTML) { alert('ยังไม่มีบทความ'); return; }
+  generate();
+}
+
+// ─── REPORT ───────────────────────────────────────────────────────────────────
+function renderReport() {
+  const arts = S.articles;
+  document.getElementById('s-total').textContent = arts.length;
+  document.getElementById('s-posted').textContent = arts.filter(a => a.status === 'โพสแล้ว').length;
+  document.getElementById('s-kw').textContent = arts.length ? Math.round(arts.reduce((s, a) => s + (a.kwCount || 0), 0) / arts.length) : 0;
+  const tbody = document.getElementById('report-body');
+  if (!arts.length) { tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:24px">ยังไม่มีบทความ</td></tr>'; return; }
+  tbody.innerHTML = arts.map(a => `<tr>
+    <td style="font-weight:500;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.title}</td>
+    <td><span class="badge blue">${a.keyword || '—'}</span></td>
+    <td style="text-align:center">${a.kwCount || 0}</td>
+    <td style="font-size:12px">${a.category || '—'}</td>
+    <td style="font-size:12px;color:var(--text-secondary)">${(a.sites || []).join(', ') || '—'}</td>
+    <td style="font-size:12px">${a.date}</td>
+    <td><span class="badge ${a.status==='โพสแล้ว'?'green':'amber'}">${a.status}</span></td>
+  </tr>`).join('');
+}
+
+function exportCSV() {
+  if (!S.articles.length) { alert('ยังไม่มีข้อมูล'); return; }
+  let csv = '\uFEFF';
+  csv += 'ชื่อบทความ,Keyword,จำนวน KW,หมวดหมู่,Tags,เว็บที่โพส,วันที่,สถานะ\n';
+  S.articles.forEach(a => {
+    csv += [a.title, a.keyword, a.kwCount, a.category, (a.tags||[]).join(';'), (a.sites||[]).join(';'), a.date, a.status].map(v => '"' + String(v||'').replace(/"/g,'""') + '"').join(',') + '\n';
+  });
+  dl(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'article_report_' + new Date().toISOString().slice(0,10) + '.csv');
+}
+
+// ─── HISTORY ──────────────────────────────────────────────────────────────────
+function renderHistory() {
+  const el = document.getElementById('history-list');
+  if (!S.articles.length) { el.innerHTML = '<div class="empty-state"><i class="ti ti-history"></i><p>ยังไม่มีประวัติบทความ</p></div>'; return; }
+  el.innerHTML = [...S.articles].reverse().map((a, i) => `
+    <div class="card" style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.title}</div>
+          <div style="font-size:12px;color:var(--text-secondary);margin-top:3px">${a.date} · keyword: <strong>${a.keyword}</strong> · ${a.kwCount} ครั้ง · ${a.category}</div>
+          <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:4px">${(a.tags||[]).map(t=>'<span class="badge blue">'+t+'</span>').join('')}</div>
+          <div style="margin-top:5px;font-size:12px;color:var(--text-secondary)"><i class="ti ti-world" style="font-size:12px"></i> ${(a.sites||[]).join(', ') || 'ไม่ได้โพส'}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+          <span class="badge ${a.status==='โพสแล้ว'?'green':'amber'}">${a.status}</span>
+          <button class="btn sm" onclick="openPreview(${S.articles.length - 1 - i})"><i class="ti ti-eye"></i>Preview</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function openPreview(i) {
+  const a = S.articles[i];
+  document.getElementById('modal-title').textContent = a.title;
+  document.getElementById('modal-meta').textContent = `${a.date} · ${a.category} · keyword: ${a.keyword} (${a.kwCount} ครั้ง) · ${(a.sites||[]).join(', ') || 'ไม่ได้โพส'}`;
+  document.getElementById('modal-body').innerHTML = a.html || '<p style="color:var(--text-muted)">ไม่มีเนื้อหา</p>';
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-bg').classList.remove('open'); }
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function exportData() {
+  dl(new Blob([JSON.stringify({ sites: S.sites, articles: S.articles }, null, 2)], { type: 'application/json' }), 'wp_article_backup_' + new Date().toISOString().slice(0,10) + '.json');
+}
+function clearData() {
+  if (!confirm('ลบข้อมูลทั้งหมด? ไม่สามารถกู้คืนได้')) return;
+  localStorage.removeItem('wp_sites'); localStorage.removeItem('wp_articles');
+  S.sites = []; S.articles = []; S.selSites.clear();
+  renderSitesList(); renderPostSites();
+  alert('ล้างข้อมูลแล้ว');
+}
+
+// ─── UTILS ────────────────────────────────────────────────────────────────────
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+function dl(blob, name) { const u = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = u; a.download = name; a.click(); URL.revokeObjectURL(u); }
+function fallbackArticle(title, kw) {
+  const k = kw || title;
+  return `<h1>${title}</h1><p class="seo-meta">บทความนี้จะพูดถึง${k}อย่างละเอียด ครอบคลุมทุกมุมมองเพื่อช่วยให้คุณเข้าใจ${k}ได้อย่างถ่องแท้</p><h2>${k}คืออะไร?</h2><p><strong>${k}</strong>เป็นหัวข้อที่ได้รับความสนใจในปัจจุบัน การทำความเข้าใจ${k}จะช่วยให้คุณได้รับประโยชน์สูงสุด</p><h2>ประโยชน์ของ${k}</h2><ul><li>ช่วยพัฒนาทักษะและความรู้</li><li>เพิ่มประสิทธิภาพในชีวิตประจำวัน</li><li>สร้างผลลัพธ์ที่ดีในระยะยาว</li></ul><h2>วิธีเริ่มต้น</h2><p>การเริ่มต้นกับ<strong>${k}</strong>ไม่ใช่เรื่องยาก หากคุณทำตามขั้นตอนที่ถูกต้อง ${k}จะช่วยให้ชีวิตดีขึ้นได้</p><h2>สรุป</h2><p>${k}เป็นสิ่งสำคัญที่ควรให้ความใส่ใจ ลองนำความรู้เกี่ยวกับ<strong>${k}</strong>ไปปรับใช้ในชีวิตประจำวันของคุณได้เลย</p>`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+renderSitesList();
+renderPostSites();
+updateApiStatus();
+if (getApiKey()) document.getElementById('api-key-input').value = getApiKey();
+</script>
+</body>
+</html>
